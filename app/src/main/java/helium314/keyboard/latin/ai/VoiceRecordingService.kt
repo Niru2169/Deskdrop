@@ -531,9 +531,28 @@ class VoiceRecordingService : Service() {
 
                 AiServiceSync.setContext(this@VoiceRecordingService)
                 val prefs = DeviceProtectedUtils.getSharedPreferences(this@VoiceRecordingService)
-                val transcript = AiServiceSync.transcribeWithWhisper(wavFile, prefs)
+                val engineRaw = prefs.getString(Settings.PREF_AI_VOICE_ENGINE, Defaults.PREF_AI_VOICE_ENGINE) ?: "google"
+                val engine = if (engineRaw == "whisper") "groq" else engineRaw
+                if (engine != "groq") {
+                    mainHandler.post {
+                        removeStopOverlay()
+                        Toast.makeText(this@VoiceRecordingService, "Select Groq in AI Voice speech engine settings", Toast.LENGTH_LONG).show()
+                    }
+                    stopSelf()
+                    return@thread
+                }
+                val transcript = AiServiceSync.transcribeWithGroqWhisper(wavFile, prefs)
                 // Clean up audio file after transcription
                 try { wavFile.delete() } catch (_: Exception) {}
+
+                if (transcript.startsWith("[Groq")) {
+                    mainHandler.post {
+                        removeStopOverlay()
+                        Toast.makeText(this@VoiceRecordingService, transcript, Toast.LENGTH_LONG).show()
+                    }
+                    stopSelf()
+                    return@thread
+                }
 
                 if (transcript.isBlank()) {
                     mainHandler.post {
