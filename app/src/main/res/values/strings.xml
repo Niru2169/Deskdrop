@@ -124,6 +124,7 @@
     <string name="ai_voice_no_clipboard">No clipboard content \u2014 copy a message first</string>
     <string name="ai_voice_speech_engine">Speech engine</string>
     <string name="ai_voice_engine_whisper">Whisper (server)</string>
+    <string name="ai_voice_engine_groq">Groq (Whisper)</string>
     <string name="ai_voice_mode_label">Mode</string>
     <string name="ai_clipboard_empty">Clipboard is empty</string>
     <string name="ai_clipboard_title">Deskdrop AI: Clipboard</string>

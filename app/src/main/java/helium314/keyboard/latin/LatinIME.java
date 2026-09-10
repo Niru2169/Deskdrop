@@ -1837,10 +1837,11 @@ public class LatinIME extends InputMethodService implements
 
         // START new recording based on engine preference
         final android.content.SharedPreferences prefs = helium314.keyboard.latin.utils.DeviceProtectedUtils.getSharedPreferences(this);
-        final String engine = prefs.getString(Settings.PREF_AI_VOICE_ENGINE, helium314.keyboard.latin.settings.Defaults.PREF_AI_VOICE_ENGINE);
+        final String rawEngine = prefs.getString(Settings.PREF_AI_VOICE_ENGINE, helium314.keyboard.latin.settings.Defaults.PREF_AI_VOICE_ENGINE);
+        final String engine = "whisper".equals(rawEngine) ? "groq" : rawEngine;
         android.util.Log.d("LatinIME", "Starting voice recognition, engine=" + engine);
 
-        if ("whisper".equals(engine)) {
+        if ("groq".equals(engine)) {
             startWhisperRecording();
             return;
         }
@@ -2041,7 +2042,7 @@ public class LatinIME extends InputMethodService implements
                 });
                 return;
             }
-            String transcription = helium314.keyboard.latin.ai.AiServiceSync.transcribeWithWhisper(wavFile, prefs, whisperHandle);
+            String transcription = helium314.keyboard.latin.ai.AiServiceSync.transcribeWithGroqWhisper(wavFile, prefs, whisperHandle);
             mHandler.post(() -> {
                 mWhisperTranscribing = false;
                 boolean cancelled = helium314.keyboard.latin.ai.AiCancelRegistry.isCancelled(whisperHandle);
@@ -2050,7 +2051,7 @@ public class LatinIME extends InputMethodService implements
                     mSuggestionStripView.setAiProcessing(false, helium314.keyboard.latin.utils.ToolbarKey.AI_VOICE);
                 }
                 if (cancelled) return;
-                if (transcription.startsWith("[Whisper")) {
+                if (transcription.startsWith("[Groq")) {
                     android.widget.Toast.makeText(this, transcription, android.widget.Toast.LENGTH_LONG).show();
                 } else {
                     mInputLogic.handleAiVoiceResult(transcription);

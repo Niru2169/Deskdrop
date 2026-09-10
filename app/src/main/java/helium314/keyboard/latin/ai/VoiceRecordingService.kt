@@ -226,28 +226,12 @@ class VoiceRecordingService : Service() {
     private fun startRecording(executeMode: Boolean = false) {
         if (isRecording.get()) return
         val prefs = DeviceProtectedUtils.getSharedPreferences(this)
-        val engine = prefs.getString(Settings.PREF_AI_VOICE_ENGINE, Defaults.PREF_AI_VOICE_ENGINE)
+        val engineRaw = prefs.getString(Settings.PREF_AI_VOICE_ENGINE, Defaults.PREF_AI_VOICE_ENGINE)
+        val engine = if (engineRaw == "whisper") "groq" else engineRaw
 
         // Google STT engine
-        if (engine != "whisper") {
+        if (engine != "groq") {
             startGoogleSttRecording(executeMode)
-            return
-        }
-
-        // Whisper engine: check URL
-        val whisperUrl = prefs.getString(Settings.PREF_WHISPER_URL, Defaults.PREF_WHISPER_URL) ?: ""
-        if (whisperUrl.isBlank()) {
-            val dummyNotification = Notification.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_shortcut_mic)
-                .setContentTitle("Starting...")
-                .build()
-            if (Build.VERSION.SDK_INT >= 34) {
-                startForeground(NOTIFICATION_ID, dummyNotification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
-            } else {
-                startForeground(NOTIFICATION_ID, dummyNotification)
-            }
-            Toast.makeText(this, "Set a Whisper URL in AI settings to use voice recording", Toast.LENGTH_LONG).show()
-            stopSelf()
             return
         }
         try {
@@ -1417,8 +1401,9 @@ class VoiceRecordingService : Service() {
 
             val isListeningState = mutableStateOf(false)
             var whisperRec: WhisperRecorder? = null
-            val voiceEngine = prefs.getString(helium314.keyboard.latin.settings.Settings.PREF_AI_VOICE_ENGINE,
+            val voiceEngineRaw = prefs.getString(helium314.keyboard.latin.settings.Settings.PREF_AI_VOICE_ENGINE,
                 helium314.keyboard.latin.settings.Defaults.PREF_AI_VOICE_ENGINE) ?: "google"
+            val voiceEngine = if (voiceEngineRaw == "whisper") "groq" else voiceEngineRaw
 
             fun toggleVoice(onResult: (String) -> Unit) {
                 if (Build.VERSION.SDK_INT >= 23 &&
@@ -1426,7 +1411,7 @@ class VoiceRecordingService : Service() {
                     service.openAppSettings("Allow microphone permission for Deskdrop")
                     return
                 }
-                if (voiceEngine == "whisper") {
+                if (voiceEngine == "groq") {
                     val wr = whisperRec
                     if (wr != null) {
                         whisperRec = null
@@ -1438,10 +1423,10 @@ class VoiceRecordingService : Service() {
                                 mainHandler.post { statusText.value = "" }
                                 return@thread
                             }
-                            val transcription = AiServiceSync.transcribeWithWhisper(wavFile, prefs, null)
+                            val transcription = AiServiceSync.transcribeWithGroqWhisper(wavFile, prefs, null)
                             mainHandler.post {
                                 statusText.value = ""
-                                if (transcription.startsWith("[Whisper")) {
+                                if (transcription.startsWith("[Groq")) {
                                     Toast.makeText(service, transcription, Toast.LENGTH_LONG).show()
                                 } else if (transcription.isNotBlank()) {
                                     onResult(transcription)

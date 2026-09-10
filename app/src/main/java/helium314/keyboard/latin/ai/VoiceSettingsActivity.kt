@@ -70,7 +70,8 @@ class VoiceSettingsActivity : ComponentActivity() {
         } catch (_: Exception) {}
 
         val currentVoiceModel = prefs.getString(Settings.PREF_AI_VOICE_MODEL, "") ?: ""
-        val currentEngine = prefs.getString(Settings.PREF_AI_VOICE_ENGINE, Defaults.PREF_AI_VOICE_ENGINE) ?: Defaults.PREF_AI_VOICE_ENGINE
+        val currentEngineRaw = prefs.getString(Settings.PREF_AI_VOICE_ENGINE, Defaults.PREF_AI_VOICE_ENGINE) ?: Defaults.PREF_AI_VOICE_ENGINE
+        val currentEngine = if (currentEngineRaw == "whisper") "groq" else currentEngineRaw
         val validSavedMode = if (savedMode < builtinCount + customNames.size) savedMode else 0
 
         val models = mutableListOf<ModelItem>()
@@ -225,14 +226,14 @@ private fun VoiceSettingsContent(
                 Spacer(Modifier.width(16.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { selectedEngine = "whisper" }
+                    modifier = Modifier.clickable { selectedEngine = "groq" }
                 ) {
                     RadioButton(
-                        selected = selectedEngine == "whisper",
-                        onClick = { selectedEngine = "whisper" },
+                        selected = selectedEngine == "groq",
+                        onClick = { selectedEngine = "groq" },
                         colors = RadioButtonDefaults.colors(selectedColor = brandTeal())
                     )
-                    Text(stringResource(R.string.ai_voice_engine_whisper), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                    Text(stringResource(R.string.ai_voice_engine_groq), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                 }
             }
 

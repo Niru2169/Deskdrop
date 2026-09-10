@@ -97,8 +97,6 @@ private val wizardCloudModels = listOf(
     "GPT OSS 20B (Groq)" to "groq:openai/gpt-oss-20b",
     "Qwen 3.6 27B (Groq)" to "groq:qwen/qwen3.6-27b",
     "Qwen 3.8 27B (Groq)" to "groq:qwen/qwen3.8-27b",
-    "Whisper Large V3 (Groq)" to "groq:whisper-large-v3",
-    "Whisper Large V3 Turbo (Groq)" to "groq:whisper-large-v3-turbo",
 )
 
 private sealed class OllamaStatus {
