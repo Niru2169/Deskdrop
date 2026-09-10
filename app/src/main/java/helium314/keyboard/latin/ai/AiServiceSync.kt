@@ -353,20 +353,13 @@ object AiServiceSync {
 
     @JvmField
     val CLOUD_MODELS: List<Pair<String, String>> = listOf(
-        "Gemini 2.5 Flash" to "gemini:gemini-2.5-flash",
-        "Claude Sonnet 4.5 (Anthropic)" to "anthropic:claude-sonnet-4-5",
-        "Claude Opus 4.1 (Anthropic)" to "anthropic:claude-opus-4-1",
-        "Claude Haiku 4.5 (Anthropic)" to "anthropic:claude-haiku-4-5",
-        "GPT-4o (OpenAI)" to "openai-cloud:gpt-4o",
-        "GPT-4o mini (OpenAI)" to "openai-cloud:gpt-4o-mini",
-        "GPT-4.1 (OpenAI)" to "openai-cloud:gpt-4.1",
-        "Llama 4 Scout (Groq)" to "groq:meta-llama/llama-4-scout-17b-16e-instruct",
-        "Llama 3.3 70B (Groq)" to "groq:llama-3.3-70b-versatile",
-        "Gemma 2 9B (Groq)" to "groq:gemma2-9b-it",
-        "Gemma 4 26B (OpenRouter)" to "openrouter:google/gemma-4-26b-a4b-it:free",
-        "Gemma 3 27B (OpenRouter)" to "openrouter:google/gemma-3-27b-it:free",
-        "Llama 3.3 70B (OpenRouter)" to "openrouter:meta-llama/llama-3.3-70b-instruct:free",
-        "Qwen3 Coder (OpenRouter)" to "openrouter:qwen/qwen3-coder:free",
+        "Compound (Groq)" to "groq:groq/compound",
+        "Compound Mini (Groq)" to "groq:groq/compound-mini",
+        "GPT OSS 20B (Groq)" to "groq:openai/gpt-oss-20b",
+        "Qwen 3.6 27B (Groq)" to "groq:qwen/qwen3.6-27b",
+        "Qwen 3.8 27B (Groq)" to "groq:qwen/qwen3.8-27b",
+        "Whisper Large V3 (Groq)" to "groq:whisper-large-v3",
+        "Whisper Large V3 Turbo (Groq)" to "groq:whisper-large-v3-turbo",
     )
 
     /**

@@ -92,14 +92,13 @@ import kotlinx.coroutines.withContext
 private val DeskdropTeal = Color(0xFF2D8B7A)
 
 private val wizardCloudModels = listOf(
-    "Llama 4 Scout (Groq)" to "groq:meta-llama/llama-4-scout-17b-16e-instruct",
-    "Gemini 2.5 Flash" to "gemini:gemini-2.5-flash",
-    "Llama 3.3 70B (Groq)" to "groq:llama-3.3-70b-versatile",
-    "Gemma 2 9B (Groq)" to "groq:gemma2-9b-it",
-    "Gemma 3 27B (OpenRouter)" to "openrouter:google/gemma-3-27b-it:free",
-    "Llama 4 Scout (OpenRouter)" to "openrouter:meta-llama/llama-4-scout:free",
-    "Mistral Small 24B (OpenRouter)" to "openrouter:mistralai/mistral-small-3.1-24b-instruct:free",
-    "Qwen3 30B (OpenRouter)" to "openrouter:qwen/qwen3-30b-a3b:free",
+    "Compound (Groq)" to "groq:groq/compound",
+    "Compound Mini (Groq)" to "groq:groq/compound-mini",
+    "GPT OSS 20B (Groq)" to "groq:openai/gpt-oss-20b",
+    "Qwen 3.6 27B (Groq)" to "groq:qwen/qwen3.6-27b",
+    "Qwen 3.8 27B (Groq)" to "groq:qwen/qwen3.8-27b",
+    "Whisper Large V3 (Groq)" to "groq:whisper-large-v3",
+    "Whisper Large V3 Turbo (Groq)" to "groq:whisper-large-v3-turbo",
 )
 
 private sealed class OllamaStatus {
@@ -245,10 +244,9 @@ fun WelcomeWizard(
             if (geminiApiKey.isNotBlank()) {
                 helium314.keyboard.latin.ai.SecureApiKeys.setKey(helium314.keyboard.latin.settings.Settings.PREF_GEMINI_API_KEY, geminiApiKey)
             }
-            // Auto-select model: prefer Groq (faster), fall back to Gemini
+            // Auto-select model: use Groq default when Groq key is configured
             val autoModel = when {
-                groqApiKey.isNotBlank() -> "groq:meta-llama/llama-4-scout-17b-16e-instruct"
-                geminiApiKey.isNotBlank() -> "gemini:gemini-2.5-flash"
+                groqApiKey.isNotBlank() -> "groq:groq/compound"
                 else -> selectedCloudModel
             }
             editor.putString(helium314.keyboard.latin.settings.Settings.PREF_AI_MODEL, autoModel)
@@ -826,8 +824,7 @@ fun WelcomeWizard(
                                     editor.putString(helium314.keyboard.latin.settings.Settings.PREF_OLLAMA_URL, helium314.keyboard.latin.ai.AiServiceSync.normalizeOllamaUrl(ollamaUrl))
                                 } else if (selectedMode == "cloud") {
                                     val autoModel = when {
-                                        groqApiKey.isNotBlank() -> "groq:meta-llama/llama-4-scout-17b-16e-instruct"
-                                        geminiApiKey.isNotBlank() -> "gemini:gemini-2.5-flash"
+                                        groqApiKey.isNotBlank() -> "groq:groq/compound"
                                         else -> selectedCloudModel
                                     }
                                     editor.putString(helium314.keyboard.latin.settings.Settings.PREF_AI_MODEL, autoModel)
