@@ -353,20 +353,11 @@ object AiServiceSync {
 
     @JvmField
     val CLOUD_MODELS: List<Pair<String, String>> = listOf(
-        "Gemini 2.5 Flash" to "gemini:gemini-2.5-flash",
-        "Claude Sonnet 4.5 (Anthropic)" to "anthropic:claude-sonnet-4-5",
-        "Claude Opus 4.1 (Anthropic)" to "anthropic:claude-opus-4-1",
-        "Claude Haiku 4.5 (Anthropic)" to "anthropic:claude-haiku-4-5",
-        "GPT-4o (OpenAI)" to "openai-cloud:gpt-4o",
-        "GPT-4o mini (OpenAI)" to "openai-cloud:gpt-4o-mini",
-        "GPT-4.1 (OpenAI)" to "openai-cloud:gpt-4.1",
-        "Llama 4 Scout (Groq)" to "groq:meta-llama/llama-4-scout-17b-16e-instruct",
-        "Llama 3.3 70B (Groq)" to "groq:llama-3.3-70b-versatile",
-        "Gemma 2 9B (Groq)" to "groq:gemma2-9b-it",
-        "Gemma 4 26B (OpenRouter)" to "openrouter:google/gemma-4-26b-a4b-it:free",
-        "Gemma 3 27B (OpenRouter)" to "openrouter:google/gemma-3-27b-it:free",
-        "Llama 3.3 70B (OpenRouter)" to "openrouter:meta-llama/llama-3.3-70b-instruct:free",
-        "Qwen3 Coder (OpenRouter)" to "openrouter:qwen/qwen3-coder:free",
+        "Compound (Groq)" to "groq:groq/compound",
+        "Compound Mini (Groq)" to "groq:groq/compound-mini",
+        "GPT OSS 20B (Groq)" to "groq:openai/gpt-oss-20b",
+        "Qwen 3.6 27B (Groq)" to "groq:qwen/qwen3.6-27b",
+        "Qwen 3.8 27B (Groq)" to "groq:qwen/qwen3.8-27b",
     )
 
     /**
@@ -2503,6 +2494,78 @@ object AiServiceSync {
         audioFile.delete()
         if (r2.success) return r2.text
         return r2.text
+    }
+
+    @JvmStatic
+    @JvmOverloads
+    fun transcribeWithGroqWhisper(
+        audioFile: java.io.File,
+        prefs: SharedPreferences,
+        cancelHandle: AiCancelRegistry.CancelHandle? = null
+    ): String {
+        val apiKey = SecureApiKeys.getKey(Settings.PREF_GROQ_API_KEY)
+        if (apiKey.isBlank()) {
+            audioFile.delete()
+            return "[Groq error: missing API key]"
+        }
+        val selectedVoiceModel = prefs.getString(Settings.PREF_AI_VOICE_MODEL, "") ?: ""
+        val model = when (selectedVoiceModel) {
+            "groq:whisper-large-v3", "groq:whisper-large-v3-turbo" -> selectedVoiceModel.substringAfter(":")
+            else -> "whisper-large-v3-turbo"
+        }
+        val endpoint = "https://api.groq.com/openai/v1/audio/transcriptions"
+        val boundary = "----GroqWhisperBoundary${System.currentTimeMillis()}"
+        val conn = (URL(endpoint).openConnection() as HttpURLConnection)
+        cancelHandle?.connection = conn
+        conn.requestMethod = "POST"
+        conn.setRequestProperty("Authorization", "******")
+        conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=$boundary")
+        conn.doOutput = true
+        conn.connectTimeout = 10000
+        conn.readTimeout = 120000
+        try {
+            conn.outputStream.use { out ->
+                val writer = out.bufferedWriter()
+
+                writer.write("--$boundary\r\n")
+                writer.write("Content-Disposition: form-data; name=\"file\"; filename=\"audio.wav\"\r\n")
+                writer.write("Content-Type: audio/wav\r\n\r\n")
+                writer.flush()
+                audioFile.inputStream().use { it.copyTo(out) }
+                out.flush()
+                writer.write("\r\n")
+
+                writer.write("--$boundary\r\n")
+                writer.write("Content-Disposition: form-data; name=\"model\"\r\n\r\n")
+                writer.write("$model\r\n")
+
+                writer.write("--$boundary\r\n")
+                writer.write("Content-Disposition: form-data; name=\"response_format\"\r\n\r\n")
+                writer.write("json\r\n")
+
+                writer.write("--$boundary--\r\n")
+                writer.flush()
+            }
+            val code = conn.responseCode
+            if (code != 200) {
+                if (cancelHandle?.cancelled?.get() == true) return ""
+                val errorBody = try { conn.errorStream?.bufferedReader()?.readText() } catch (_: Exception) { null } ?: ""
+                return friendlyHttpError("Groq", code, errorBody)
+            }
+            val response = readBounded(conn.inputStream)
+            if (cancelHandle?.cancelled?.get() == true) return ""
+            return try {
+                JSONObject(response).optString("text", response).trim()
+            } catch (_: Exception) {
+                response.trim()
+            }
+        } catch (e: Exception) {
+            if (cancelHandle?.cancelled?.get() == true) return ""
+            return friendlyNetworkError("Groq", e, isLocal = false)
+        } finally {
+            audioFile.delete()
+            try { conn.disconnect() } catch (_: Exception) {}
+        }
     }
 
     private data class WhisperResult(val success: Boolean, val text: String, val httpCode: Int, val rawBody: String = "")

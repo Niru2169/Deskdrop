@@ -2175,9 +2175,10 @@ private fun VoicePromptsSection(prefs: android.content.SharedPreferences) {
     }
 
     // Speech engine picker
-    var selectedEngine by remember { mutableStateOf(prefs.getString(Settings.PREF_AI_VOICE_ENGINE, Defaults.PREF_AI_VOICE_ENGINE) ?: "google") }
-    var whisperUrl by remember { mutableStateOf(prefs.getString(Settings.PREF_WHISPER_URL, Defaults.PREF_WHISPER_URL) ?: "") }
-    var whisperUrlFallback by remember { mutableStateOf(prefs.getString(Settings.PREF_WHISPER_URL_FALLBACK, Defaults.PREF_WHISPER_URL_FALLBACK) ?: "") }
+    var selectedEngine by remember {
+        val savedEngine = prefs.getString(Settings.PREF_AI_VOICE_ENGINE, Defaults.PREF_AI_VOICE_ENGINE) ?: "google"
+        mutableStateOf(if (savedEngine == "whisper") "groq" else savedEngine)
+    }
 
     BrandCard {
         Column {
@@ -2201,12 +2202,12 @@ private fun VoicePromptsSection(prefs: android.content.SharedPreferences) {
                     label = { Text("Google", color = MaterialTheme.colorScheme.onSurface) }
                 )
                 androidx.compose.material3.FilterChip(
-                    selected = selectedEngine == "whisper",
+                    selected = selectedEngine == "groq",
                     onClick = {
-                        selectedEngine = "whisper"
-                        prefs.edit { putString(Settings.PREF_AI_VOICE_ENGINE, "whisper") }
+                        selectedEngine = "groq"
+                        prefs.edit { putString(Settings.PREF_AI_VOICE_ENGINE, "groq") }
                     },
-                    label = { Text("Whisper (server)", color = MaterialTheme.colorScheme.onSurface) }
+                    label = { Text("Groq (Whisper)", color = MaterialTheme.colorScheme.onSurface) }
                 )
             }
             if (selectedEngine == "google") {
@@ -2218,38 +2219,11 @@ private fun VoicePromptsSection(prefs: android.content.SharedPreferences) {
                 )
             } else {
                 Text(
-                    "Requires a Whisper-compatible server (e.g. speaches). Leave URL empty to use your Ollama server host on port 8080.",
+                    "Uses Groq Whisper transcription via your configured Groq API key.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     modifier = Modifier.padding(top = 4.dp)
                 )
-                androidx.compose.material3.OutlinedTextField(
-                    value = whisperUrl,
-                    onValueChange = {
-                        whisperUrl = it
-                        prefs.edit { putString(Settings.PREF_WHISPER_URL, it) }
-                    },
-                    label = { Text("Whisper server URL", color = MaterialTheme.colorScheme.onSurface) },
-                    placeholder = { Text("e.g. http://192.168.1.100:8080", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)) },
-                    singleLine = true,
-                    colors = brandOutlinedTextFieldColors(teal),
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                )
-                androidx.compose.material3.OutlinedTextField(
-                    value = whisperUrlFallback,
-                    onValueChange = {
-                        whisperUrlFallback = it
-                        prefs.edit { putString(Settings.PREF_WHISPER_URL_FALLBACK, it) }
-                    },
-                    label = { Text("Fallback URL (optional)", color = MaterialTheme.colorScheme.onSurface) },
-                    placeholder = { Text("e.g. http://192.168.1.100:8080", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)) },
-                    singleLine = true,
-                    colors = brandOutlinedTextFieldColors(teal),
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
-                )
-
-                // Whisper model management
-                WhisperModelSection(prefs, teal)
             }
         }
     }

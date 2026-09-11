@@ -725,7 +725,8 @@ fun showAiVoiceModeDialog(ime: LatinIME) {
         } catch (_: Exception) {}
 
         val currentVoiceModel = prefs.getString(Settings.PREF_AI_VOICE_MODEL, "") ?: ""
-        val currentEngine = prefs.getString(Settings.PREF_AI_VOICE_ENGINE, Defaults.PREF_AI_VOICE_ENGINE) ?: Defaults.PREF_AI_VOICE_ENGINE
+        val currentEngineRaw = prefs.getString(Settings.PREF_AI_VOICE_ENGINE, Defaults.PREF_AI_VOICE_ENGINE) ?: Defaults.PREF_AI_VOICE_ENGINE
+        val currentEngine = if (currentEngineRaw == "whisper") "groq" else currentEngineRaw
         val clipContent = ime.clipboardHistoryManager.retrieveClipboardContent()
         val hasClipboard = clipContent != null && clipContent.isNotEmpty()
 
@@ -967,14 +968,14 @@ private fun AiVoiceModeContent(
             Spacer(Modifier.width(16.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { selectedEngine = "whisper" }
+                modifier = Modifier.clickable { selectedEngine = "groq" }
             ) {
                 RadioButton(
-                    selected = selectedEngine == "whisper",
-                    onClick = { selectedEngine = "whisper" },
+                    selected = selectedEngine == "groq",
+                    onClick = { selectedEngine = "groq" },
                     colors = RadioButtonDefaults.colors(selectedColor = brandTeal())
                 )
-                Text(stringResource(R.string.ai_voice_engine_whisper), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                Text(stringResource(R.string.ai_voice_engine_groq), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
             }
         }
 
@@ -2675,7 +2676,8 @@ fun showAiActionsDialog(ime: LatinIME) {
 
     var whisperRecorder: WhisperRecorder? = null
     val isListening = mutableStateOf(false)
-    val engine = prefs.getString(Settings.PREF_AI_VOICE_ENGINE, Defaults.PREF_AI_VOICE_ENGINE) ?: "google"
+    val engineRaw = prefs.getString(Settings.PREF_AI_VOICE_ENGINE, Defaults.PREF_AI_VOICE_ENGINE) ?: "google"
+    val engine = if (engineRaw == "whisper") "groq" else engineRaw
 
     fun checkMicPermission(): Boolean {
         if (android.os.Build.VERSION.SDK_INT >= 23 &&
@@ -2692,7 +2694,7 @@ fun showAiActionsDialog(ime: LatinIME) {
     fun toggleVoice(onResult: (String) -> Unit) {
         if (!checkMicPermission()) return
 
-        if (engine == "whisper") {
+        if (engine == "groq") {
             // Whisper: toggle recording
             val wr = whisperRecorder
             if (wr != null) {
@@ -2706,10 +2708,10 @@ fun showAiActionsDialog(ime: LatinIME) {
                         handler.post { statusText.value = "" }
                         return@thread
                     }
-                    val transcription = AiServiceSync.transcribeWithWhisper(wavFile, prefs, null)
+                    val transcription = AiServiceSync.transcribeWithGroqWhisper(wavFile, prefs, null)
                     handler.post {
                         statusText.value = ""
-                        if (transcription.startsWith("[Whisper")) {
+                        if (transcription.startsWith("[Groq")) {
                             Toast.makeText(ime, transcription, Toast.LENGTH_LONG).show()
                         } else if (transcription.isNotBlank()) {
                             onResult(transcription)
